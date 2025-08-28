@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dr. Navalha Login</title>
+        <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/css/bootstrap.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" />
+        <link rel="stylesheet" type="text/css" href="/css/login.css" th:href="@{/css/login.css}" />
+</head>
+<body class="bg-dark">
+<div class="container">
+    <form class="form-signin w-100 m-auto" method="post" th:action="@{/login}">
+        <a th:href="${reactAppUri}" class="text-light my-2"><< Voltar</a>
+        <div th:if="${param.error}" class="alert alert-danger" role="alert">
+            Usuário ou senha inválidos.
+        </div>
+        <div th:if="${param.logout}" class="alert alert-success" role="alert">
+            Você saiu.
+        </div>
+        <h1 class="h3 mb-3 fw-normal text-light">Entrar</h1>
+        <div class="form-floating">
+            <label for="username" class="text-light">Usuário</label>
+            <input type="text" id="username" name="username" class="form-control" required autofocus>
+        </div>
+        <div class="form-floating">
+            <label for="password" class="text-light">Senha</label>
+            <input type="password" id="password" name="password" class="form-control" required>
+        </div>
+        <div>
+            <button class="w-100 mt-5 btn btn-lg btn-primary btn-block" type="submit">Entrar</button>
+            <a class="w-100 btn btn-light btn-block bg-white" href="/oauth2/authorization/google" style="margin-top: 10px">
+                <img src="/images/google.png" th:src="@{/images/google.png}" width="20" style="margin-right: 5px;" alt="Sign in with Google">
+                Entrar com Google
+            </a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

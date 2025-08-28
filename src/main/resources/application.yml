@@ -1,0 +1,57 @@
+server:
+  port: 9000
+
+spring:
+  security:
+    oauth2:
+      access-token-ttl: 30m
+      refresh-token-ttl: 7d
+
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+              - openid
+          provider:
+            google:
+              user-name-attribute: email
+              authorization-uri: ${AUTHORIZATION_URI}
+
+
+  datasource:
+    platform: postgres
+    url: ${DATASOURCE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PWD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database: POSTGRESQL
+    show-sql: true
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc.lob.non_contextual_creation: true
+
+config:
+  uris:
+    issuer-uri: ${ISSUER_URI}
+    logout-uri: ${LOGOUT_URI}
+    react-app-uri: ${REACT_APP_URI}
+    redirect-uri: ${REDIRECT_URI}
+    consent-uri: ${CONSENT_URI}
+
+logging:
+  level:
+    org:
+      springframework:
+        security:
+          - TRACE
+          - oauth2: TRACE
