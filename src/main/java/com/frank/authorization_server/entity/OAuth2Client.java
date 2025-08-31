@@ -36,4 +36,7 @@ public class OAuth2Client {
     private Set<String> scopes;
     @Column(name = "required_proof_key")
     private boolean requireProofKey;
+
+    @Column(name = "require_consent")
+    private boolean requireConsent;
 }

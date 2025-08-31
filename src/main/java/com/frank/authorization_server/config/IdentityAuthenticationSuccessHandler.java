@@ -34,7 +34,6 @@ public class IdentityAuthenticationSuccessHandler implements AuthenticationSucce
             }
         }
 
-        // Redireciona explicitamente para a URL do frontend
         response.sendRedirect(redirectUri);
     }
 

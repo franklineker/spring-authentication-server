@@ -1,8 +1,6 @@
 package com.frank.authorization_server.security;
 
 import com.frank.authorization_server.config.IdentityAuthenticationSuccessHandler;
-import com.frank.authorization_server.config.LoginSuccessHandler;
-import com.frank.authorization_server.repository.UserRepository;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -23,7 +21,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
@@ -53,15 +50,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class WebSecurityConfiguration {
 
-    private final PasswordEncoder passwordEncoder;
-    private final UserRepository userRepository;
-
     @Value("${config.uris.issuer-uri}")
     private String issuerUri;
     @Value("${config.uris.logout-uri}")
     private String logoutUri;
-    @Value("${config.uris.redirect-uri}")
-    private String redirectUri;
 
     @Bean
     @Order(1)
@@ -94,20 +86,18 @@ public class WebSecurityConfiguration {
                 "/webjars/**",
                 "/error"));
         http.authorizeHttpRequests((authorize) -> {
-            authorize.requestMatchers(HttpMethod.POST, "/auth/user").permitAll();
-            authorize.requestMatchers(
-                    "/css/login.css",
-                    "/images/**",
-                    "/login",
-                    "/logout",
-                    "/auth/client/save",
-                    "/error",
-                    "/webjars/**").permitAll()
-                    .anyRequest().authenticated();
-        }).formLogin(form -> form.loginPage("/login"))
-                .oauth2Login(login -> login
-                        .loginPage("/login")
-                        .successHandler(authenticationSuccessHandler()))
+                    authorize.requestMatchers(HttpMethod.POST, "/auth/user").permitAll();
+                    authorize.requestMatchers(
+                                    "/css/login.css",
+                                    "/images/**",
+                                    "/login",
+                                    "/logout",
+                                    "/auth/client/save",
+                                    "/error",
+                                    "/webjars/**").permitAll()
+                            .anyRequest().authenticated();
+                }).formLogin(form -> form.loginPage("/login"))
+                .oauth2Login(login -> login.loginPage("/login"))
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         http.logout(logout -> logout.logoutSuccessUrl(logoutUri));
@@ -208,10 +198,8 @@ public class WebSecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        IdentityAuthenticationSuccessHandler successHandler = new IdentityAuthenticationSuccessHandler(redirectUri);
-        successHandler.setOAuth2UserHandler(new LoginSuccessHandler(userRepository));
-        return successHandler;
+    public AuthenticationSuccessHandler successHandler(){
+        return new IdentityAuthenticationSuccessHandler("http://localhost:3000/api/auth/callback");
     }
 
 }

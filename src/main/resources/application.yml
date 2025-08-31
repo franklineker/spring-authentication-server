@@ -19,7 +19,7 @@ spring:
           provider:
             google:
               user-name-attribute: email
-              authorization-uri: ${AUTHORIZATION_URI}
+              issuer-uri: https://accounts.google.com
 
 
   datasource:

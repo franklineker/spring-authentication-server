@@ -1,6 +1,5 @@
 package com.frank.authorization_server.web.dto;
 
-import com.frank.authorization_server.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
