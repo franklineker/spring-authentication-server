@@ -95,7 +95,7 @@ public class WebSecurityConfiguration {
                                     "/auth/client/save",
                                     "/error",
                                     "/webjars/**").permitAll()
-                            .anyRequest().authenticated();
+                            .anyRequest().permitAll();
                 }).formLogin(form -> form.loginPage("/login"))
                 .oauth2Login(login -> login.loginPage("/login"))
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
