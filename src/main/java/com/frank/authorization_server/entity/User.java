@@ -2,6 +2,7 @@ package com.frank.authorization_server.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -19,14 +21,15 @@ import java.util.*;
 public class User implements UserDetails {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "client_ref")
+    private UUID clientRef;
 
     @Column(name = "password", nullable = false)
     private String password;
@@ -34,14 +37,18 @@ public class User implements UserDetails {
     @Column(name = "provider")
     private String provider;
 
-    @Column(name = "client_id")
-    private String clientId;
-
+    @Builder.Default
     private boolean expired = false;
+
+    @Builder.Default
     private boolean locked = false;
-    @Column(name = "credentials_expired")
+
+    @Builder.Default
     private boolean credentialsExpired = false;
+
+    @Builder.Default
     private boolean disabled = false;
+
 
     @Column(name = "created_at", nullable = false)
     private ZonedDateTime createdAt;

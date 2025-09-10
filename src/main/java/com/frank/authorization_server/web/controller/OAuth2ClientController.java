@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth/client")
+@RequestMapping("/auth/oauth2client")
 public class OAuth2ClientController {
 
     @Autowired

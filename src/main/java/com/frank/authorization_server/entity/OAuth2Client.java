@@ -21,11 +21,12 @@ public class OAuth2Client {
     private UUID id;
     @Column(nullable = false, name = "client_id", unique = true)
     private String clientId;
-
-    @Column(name = "client_id_issued_at")
-    private Instant clientIdIssuedAt;
+    @Column(nullable = false, name = "client_ref")
+    private String clientRef;
     @Column(name = "client_secret",nullable = false)
     private String clientSecret;
+    @Column(name = "client_id_issued_at")
+    private Instant clientIdIssuedAt;
     @Column(name = "authorization_grant_types")
     private Set<String> authorizationGrantTypes;
     @Column(name = "authentication_methods")
