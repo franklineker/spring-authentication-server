@@ -1,12 +1,13 @@
 package com.frank.authorization_server.web.dto;
 
-import com.frank.authorization_server.entity.User;
-import jakarta.persistence.Column;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -16,15 +17,15 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDTO {
-
-   private UUID id;
+public class UserRequestDTO {
    @NotNull
+   @Email(message = "Not a valid email.")
    private String username;
    private String password;
    private String provider;
+   private String providerId;
    @NotNull
-   private UUID clientRef;
+   private UUID clientRefId;
    @NotNull
    private Set<String> roles;
    private boolean expired;
@@ -33,14 +34,4 @@ public class UserDTO {
    private boolean disabled;
    private ZonedDateTime createdAt;
    private ZonedDateTime updatedAt;
-
-   public UserDTO(String username, String password, String provider, UUID clientRef, Set<String> roles){
-      super();
-      this.username = username;
-      this.password = password;
-      this.provider = provider;
-      this.clientRef = clientRef;
-      this.roles = roles;
-   }
-
 }

@@ -17,12 +17,14 @@ import java.util.UUID;
 public class OAuth2Client {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
     @Column(nullable = false, name = "client_id", unique = true)
     private String clientId;
-    @Column(nullable = false, name = "client_ref")
-    private String clientRef;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "client_ref", nullable = false)
+    private Client clientRef;
     @Column(name = "client_secret",nullable = false)
     private String clientSecret;
     @Column(name = "client_id_issued_at")

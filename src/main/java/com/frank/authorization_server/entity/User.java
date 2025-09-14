@@ -25,17 +25,21 @@ public class User implements UserDetails {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "username", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String username;
 
-    @Column(name = "client_ref")
-    private UUID clientRef;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "client_ref", nullable = false)
+    private Client clientRef;
 
     @Column(name = "password", nullable = false)
     private String password;
 
     @Column(name = "provider")
     private String provider;
+
+    @Column(name = "provider_id",  unique = true)
+    private String providerId;
 
     @Builder.Default
     private boolean expired = false;

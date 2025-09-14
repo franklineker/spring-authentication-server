@@ -1,29 +1,32 @@
 package com.frank.authorization_server.mapper;
 
+import com.frank.authorization_server.entity.Client;
 import com.frank.authorization_server.entity.User;
-import com.frank.authorization_server.web.dto.UserDTO;
-import lombok.Builder;
+import com.frank.authorization_server.web.dto.UserRequestDTO;
+import com.frank.authorization_server.web.dto.UserResponseDTO;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class UserMapper {
 
-    public static User toUser(UserDTO dto){
+    public static User toUser(UserRequestDTO dto, Client client){
         return dto != null ? User.builder()
                 .username(dto.getUsername())
                 .password(dto.getPassword())
                 .provider(dto.getProvider())
+                .providerId(dto.getProviderId())
                 .roles(dto.getRoles())
-                .clientRef(dto.getClientRef())
+                .clientRef(client)
                 .build() : null;
     }
 
-    public static UserDTO toUserResponseDTO(User user){
-        return user != null ? UserDTO.builder()
+    public static UserResponseDTO toUserResponseDTO(User user){
+        return user != null ? UserResponseDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .clientRef(user.getClientRef())
+                .clientRefId(user.getClientRef().getId())
                 .provider(user.getProvider())
+                .providerId(user.getProviderId())
                 .roles(user.getRoles())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())

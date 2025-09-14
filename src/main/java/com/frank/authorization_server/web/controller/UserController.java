@@ -1,7 +1,8 @@
 package com.frank.authorization_server.web.controller;
 
 import com.frank.authorization_server.service.UserService;
-import com.frank.authorization_server.web.dto.UserDTO;
+import com.frank.authorization_server.web.dto.UserRequestDTO;
+import com.frank.authorization_server.web.dto.UserResponseDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,8 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO dto){
-        UserDTO createdUser = userService.createUser(dto);
+    public ResponseEntity<UserResponseDTO> createUser(@RequestBody UserRequestDTO dto){
+        UserResponseDTO createdUser = userService.createUser(dto);
         return ResponseEntity.ok(createdUser);
     }
 }
