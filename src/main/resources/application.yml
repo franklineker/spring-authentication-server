@@ -52,6 +52,5 @@ logging:
   level:
     org:
       springframework:
-        security:
-          - TRACE
-          - oauth2: TRACE
+        security: DEBUG
+        security.oauth2: TRACE

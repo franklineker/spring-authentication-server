@@ -2,6 +2,8 @@ package com.frank.authorization_server.service;
 
 // CustomOAuth2UserService.java
 
+import com.frank.authorization_server.entity.CustomOAuth2User;
+import com.frank.authorization_server.entity.User;
 import lombok.AllArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -19,13 +21,18 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(userRequest);
+        System.out.println("custom loadUser() was called!");
 
-        System.out.println("OAuth2Service was called!");
+        User userFromDb = userService.processOAuth2User(oauth2User, userRequest.getClientRegistration().getClientId());
 
-        String clientId = userRequest.getClientRegistration().getClientId();
-
-        userService.processOAuth2User(oauth2User, clientId);
-
-        return oauth2User;
+        return new CustomOAuth2User(
+                userFromDb.getId(),
+                userFromDb.getClientRef().getId(),
+                userFromDb.getUsername(),
+                userFromDb.getPassword(),
+                userFromDb.getAuthorities(),
+                oauth2User.getAttributes()
+        );
     }
+
 }

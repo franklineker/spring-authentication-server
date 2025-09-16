@@ -38,7 +38,6 @@ public class BeansConfig {
         CorsConfiguration cors = new CorsConfiguration();
         cors.addAllowedOrigin("http://localhost:3000");
         cors.addAllowedOrigin("http://localhost:4200");
-        cors.addAllowedOrigin("https://1893-2804-7f0-91c1-bbab-5d52-afd2-1b22-6819.ngrok-free.app");
         cors.addAllowedHeader("*");
         cors.addAllowedMethod("*");
         cors.setAllowCredentials(true);

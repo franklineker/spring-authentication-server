@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 
 
-@AllArgsConstructor
+//@AllArgsConstructor
 @Service
 public class UserService {
 
@@ -30,7 +30,14 @@ public class UserService {
     private final ClientRepository clientRepository;
     private final OAuth2ClientRepository oAuth2ClientRepository;
 
-    @Transactional
+    public UserService(PasswordEncoder passwordEncoder, UserRepository userRepository, ClientRepository clientRepository, OAuth2ClientRepository oAuth2ClientRepository) {
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+        this.clientRepository = clientRepository;
+        this.oAuth2ClientRepository = oAuth2ClientRepository;
+    }
+
+    //@Transactional
     public UserResponseDTO createUser(@Valid UserRequestDTO dto){
 
         String passwordEncoded = passwordEncoder.encode(dto.getPassword());
@@ -44,13 +51,10 @@ public class UserService {
         return UserMapper.toUserResponseDTO(user);
     }
 
-    // UserService.java
-
-    @Transactional
+    //@Transactional
     public User processOAuth2User(OAuth2User oauth2User, String clientId) {
         String email = oauth2User.getAttribute("email");
 
-        // Busca o OAuth2Client com base no clientId fornecido
         OAuth2Client oAuth2Client = oAuth2ClientRepository.findByClientId(clientId)
                 .orElseThrow(() -> new RuntimeException("OAuth2Client not found with the provided client_id"));
 

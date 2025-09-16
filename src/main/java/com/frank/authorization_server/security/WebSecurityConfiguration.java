@@ -1,8 +1,8 @@
 package com.frank.authorization_server.security;
 
-import com.frank.authorization_server.config.IdentityAuthenticationSuccessHandler;
-import com.frank.authorization_server.entity.User;
+import com.frank.authorization_server.entity.CustomOAuth2User;
 import com.frank.authorization_server.repository.UserRepository;
+import com.frank.authorization_server.service.CustomOAuth2UserService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -23,10 +23,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
@@ -37,7 +33,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -47,8 +42,6 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -62,6 +55,7 @@ public class WebSecurityConfiguration {
     @Value("${config.uris.logout-uri}")
     private String logoutUri;
     private final UserRepository userRepository;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
     @Order(1)
@@ -76,20 +70,24 @@ public class WebSecurityConfiguration {
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
-                .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(Customizer.withDefaults()));
+                .formLogin(form -> form.loginPage("/login"))
+                .oauth2Login(login -> login
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService)))
+                .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         return http.build();
     }
 
     @Bean
     @Order(2)
-    public SecurityFilterChain defaultSecurityFilterChain(
-            HttpSecurity http,
-            OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService) throws Exception {
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.cors(Customizer.withDefaults());
         http.csrf(c -> c.ignoringRequestMatchers(
                 "/login",
                 "/auth/**",
+                "/oauth2/authorization/**",
+                "/oauth2/token",
                 "/images/**",
                 "/auth/client/save",
                 "/css/login.css",
@@ -101,13 +99,14 @@ public class WebSecurityConfiguration {
                                     "/css/login.css",
                                     "/images/**",
                                     "/login",
+                                    "/oauth2/authorization/**",
+                                    "/oauth2/token",
                                     "/logout",
                                     "/auth/client/save",
                                     "/error",
                                     "/webjars/**").permitAll()
-                            .anyRequest().permitAll();
-                }).formLogin(form -> form.loginPage("/login"))
-                .oauth2Login(login -> login
+                            .anyRequest().authenticated();
+                }).oauth2Login(login -> login
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService)))
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
@@ -140,12 +139,11 @@ public class WebSecurityConfiguration {
                 context.getClaims().claim("token_type", "access_token");
                 List<String> roles = principal.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
                 roles.add("USER");
-                if (principal.getPrincipal() instanceof OAuth2User oauth2User) {
-                    String email = oauth2User.getAttribute("email");
-                    Optional<User> user = userRepository.findByUsername(email);
+                if (principal.getPrincipal() instanceof CustomOAuth2User oAuth2User) {
                     context.getClaims()
-                            .claim("sub", email)
-                            .claim("client_ref_id", user.get().getClientRef().getId())
+                            .claim("sub", oAuth2User.getUsername())
+                            .claim("user_id", oAuth2User.getUserId())
+                            .claim("client_ref_id", oAuth2User.getClientRefId())
                             .claim("roles", roles)
                             .claim("username", principal.getName());
                 }else {
@@ -155,8 +153,6 @@ public class WebSecurityConfiguration {
                 }
             }
         };
-
-
     }
 
     @Bean
@@ -210,32 +206,5 @@ public class WebSecurityConfiguration {
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
     }
-
-    @Bean
-    public AuthenticationSuccessHandler successHandler(){
-        return new IdentityAuthenticationSuccessHandler("https://oauth.pstmn.io/v1/callback");
-    }
-
-//    @Bean
-//    public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService() {
-//        return request -> {
-//            OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(request);
-//            String email = oauth2User.getAttribute("email");
-//            String providerId = oauth2User.getAttribute("sub");
-//            System.out.println("OAuth2Service was called!");
-//
-//            userRepository.findByUsername(email).orElseGet(() -> {
-//                User newUser = User.builder()
-//                        .username(email)
-//                        .provider("google")
-//                        .providerId(providerId)
-//                        .roles(Set.of("USER"))
-//                        .build();
-//                return userRepository.save(newUser);
-//            });
-//
-//            return oauth2User;
-//        };
-//    }
 
 }
