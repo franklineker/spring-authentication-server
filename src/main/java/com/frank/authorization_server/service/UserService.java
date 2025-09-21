@@ -56,20 +56,18 @@ public class UserService {
         String email = oauth2User.getAttribute("email");
 
         OAuth2Client oAuth2Client = oAuth2ClientRepository.findByClientId(clientId)
-                .orElseThrow(() -> new RuntimeException("OAuth2Client not found with the provided client_id"));
+                .orElseThrow(() -> new RuntimeException(String.format("OAuth2Client not found with the provided client_id %s", clientId)));
 
         String providerId = oauth2User.getAttribute("sub");
         String provider = "google";
 
         return userRepository.findByUsername(email)
                 .orElseGet(() -> {
-                    // Usa o Client_Ref associado ao OAuth2Client
                     Client client = clientRepository.findById(oAuth2Client.getClientRef().getId())
                             .orElseThrow(() -> new RuntimeException("Client reference not found."));
 
                     User newUser = User.builder()
                             .username(email)
-                            .password(passwordEncoder.encode("default-password"))
                             .provider(provider)
                             .providerId(providerId)
                             .clientRef(client)

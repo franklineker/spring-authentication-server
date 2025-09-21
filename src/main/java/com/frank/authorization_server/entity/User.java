@@ -32,7 +32,7 @@ public class User implements UserDetails {
     @JoinColumn(name = "client_ref", nullable = false)
     private Client clientRef;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password")
     private String password;
 
     @Column(name = "provider")

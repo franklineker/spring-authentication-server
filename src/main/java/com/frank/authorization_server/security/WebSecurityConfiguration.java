@@ -1,8 +1,8 @@
 package com.frank.authorization_server.security;
 
-import com.frank.authorization_server.entity.CustomOAuth2User;
+import com.frank.authorization_server.entity.User;
 import com.frank.authorization_server.repository.UserRepository;
-import com.frank.authorization_server.service.CustomOAuth2UserService;
+import com.frank.authorization_server.service.UserService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
@@ -41,7 +42,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -55,7 +56,7 @@ public class WebSecurityConfiguration {
     @Value("${config.uris.logout-uri}")
     private String logoutUri;
     private final UserRepository userRepository;
-    private final CustomOAuth2UserService customOAuth2UserService;
+    private final UserService userService;
 
     @Bean
     @Order(1)
@@ -70,10 +71,8 @@ public class WebSecurityConfiguration {
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
-                .formLogin(form -> form.loginPage("/login"))
-                .oauth2Login(login -> login
-                        .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService)))
+                .formLogin(login -> login.loginPage("/login"))
+                .oauth2Login(login -> login.loginPage("/login"))
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         return http.build();
@@ -106,9 +105,9 @@ public class WebSecurityConfiguration {
                                     "/error",
                                     "/webjars/**").permitAll()
                             .anyRequest().authenticated();
-                }).oauth2Login(login -> login
-                        .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService)))
+                })
+                .formLogin(login -> login.loginPage("/login"))
+                .oauth2Login(login -> login.loginPage("/login"))
                 .oauth2ResourceServer((resourceServer) -> resourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         http.logout(logout -> logout.logoutSuccessUrl(logoutUri));
@@ -129,24 +128,25 @@ public class WebSecurityConfiguration {
 
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
-
         return context -> {
             Authentication principal = context.getPrincipal();
+            if (context.getTokenType().getValue().equals("access_token")) {
+                context.getClaims()
+                        .claim("token_type", "access_token")
+                        .claim("username", principal.getName());
 
-            if (context.getTokenType().getValue().equals("id_token")) {
-                context.getClaims().claim("token_type", "id_token");
-            } else if (context.getTokenType().getValue().equals("access_token")) {
-                context.getClaims().claim("token_type", "access_token");
-                List<String> roles = principal.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
-                roles.add("USER");
-                if (principal.getPrincipal() instanceof CustomOAuth2User oAuth2User) {
+                User user = null;
+                if(principal.getPrincipal() instanceof OAuth2User oAuth2User){
+                    String clientId = context.getAuthorization().getRegisteredClientId();
+                    user = userService.processOAuth2User(oAuth2User, clientId);
                     context.getClaims()
-                            .claim("sub", oAuth2User.getUsername())
-                            .claim("user_id", oAuth2User.getUserId())
-                            .claim("client_ref_id", oAuth2User.getClientRefId())
-                            .claim("roles", roles)
-                            .claim("username", principal.getName());
+                            .claim("username", user.getUsername())
+                            .claim("user_id", user.getId())
+                            .claim("roles", user.getRoles());
                 }else {
+                    Set<String> roles = principal.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .collect(Collectors.toSet());
                     context.getClaims()
                             .claim("roles", roles)
                             .claim("username", principal.getName());
@@ -206,5 +206,4 @@ public class WebSecurityConfiguration {
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
     }
-
 }
